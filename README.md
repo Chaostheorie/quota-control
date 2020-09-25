@@ -6,6 +6,10 @@ HRLNQuota control is a cli gui tool. The tool is in active development at the mo
 
 You can build the full tool with `cargo build --release`
 
+## Testing
+
+You will require to have a folder in `/home/quotas/`. You may also need a file such as the supplied `/assets/beispiel.quota` (need to be in `/home/quotas/`). You may also require to bei either part of the group root or of a group matching the regular expression `[bghz]z.*`.
+
 ## Attributions
 
 - [csv](https://crates.io/crates/csv) (1.1.3) by [Andrew Gallant](jamslam@gmail.com) under Unlicense/MIT

@@ -133,7 +133,7 @@ pub fn render() -> Result<(), Box<dyn Error>> {
                     // placeholder block
                     let block = Block::default()
                         .borders(Borders::ALL)
-                        .title("HLRNQuota Control")
+                        .title("Quota Control")
                         .border_type(BorderType::Rounded);
                     f.render_widget(block, chunks[1]);
                 }

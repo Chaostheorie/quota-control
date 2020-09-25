@@ -1,5 +1,5 @@
 [package]
-name = "hlrnquota-control"
+name = "quota-control"
 version = "0.1.0"
 authors = ["Cobalt <Chaosthe0rie@protonmail.com>"]
 edition = "2018"
