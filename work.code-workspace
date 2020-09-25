@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "../hlrnquota"
+		},
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"cSpell.words": [
+			"Termion",
+			"bghz",
+			"termion"
+		]
+	}
+}
