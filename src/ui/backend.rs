@@ -7,9 +7,15 @@ use ansi_term::Colour::{Red, Yellow};
 use csv::StringRecord;
 use regex::Regex;
 use serde::Deserialize;
-use std::fs::{read_dir, File};
-use std::io::prelude::*;
-use std::{error::Error, io, path::Path, process::Command, result::Result};
+use std::{
+    error::Error,
+    fs::{read_dir, File},
+    io,
+    io::prelude::*,
+    path::Path,
+    process::Command,
+    result::Result,
+};
 use tui::widgets::ListState;
 use users::{get_current_gid, get_current_username, get_user_groups};
 
