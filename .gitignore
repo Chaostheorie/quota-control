@@ -13,8 +13,9 @@ Cargo.lock
 # VSCode config folder
 .vscode/
 
-# Custom for website sync
+# Custom for website docu sync
 *.sh
 tarfiles.txt
 *.gz
 *.csv
+

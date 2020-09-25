@@ -1,6 +1,6 @@
 # Quota Control
 
-Quota control is a cli gui tool. The tool is in active development at the moment and only features a simple overview of groups.
+Quota control is a cli gui tool. The tool is in active development at the moment and only features a simple overview of groups. Progress for this application is [public](https://github.com/Chaostheorie/quota-control/projects/1?fullscreen=true).
 
 > There's only support for \*nix systems
 
