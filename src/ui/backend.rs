@@ -117,6 +117,26 @@ pub fn exit(code: i32) {
     std::process::exit(code);
 }
 
+fn human_readable(value: u64, bytes: bool) -> String {
+    let mut readable_value = value as f64;
+    let sizes = ["K", "M", "G", "T", "Y", "Z", "E"]; // This lacks support for 128 bit systems ^__^
+    let mut counter = 0_usize;
+
+    while readable_value > 1024.0 && counter < sizes.len() {
+        readable_value /= 1024.0;
+        counter += 1_usize;
+    }
+
+    let suffix = if bytes { "B" } else { "" };
+    if value < 1024 {
+        return format!("{} {}", value, suffix);
+    } else if readable_value.fract() == 0.0 {
+        return format!("{:.0} {}{}", readable_value, sizes[counter], suffix);
+    } else {
+        return format!("{:.2} {}{}", readable_value, sizes[counter], suffix);
+    }
+}
+
 fn check_user_quotas(record: QuotaRecord, group: &str) -> Vec<String> {
     let prefix = Yellow.paint("Warning:");
     let mut results: Vec<String> = Vec::new();
@@ -124,24 +144,40 @@ fn check_user_quotas(record: QuotaRecord, group: &str) -> Vec<String> {
     if record.block_hard < record.block_usage {
         results.push(format!(
             "{} Hard block limit ({}) for {} by {} exceeded. Grace Period: {}",
-            &prefix, &record.block_hard, &record.filesystem, group, &record.block_grace
+            &prefix,
+            human_readable(record.block_hard, true),
+            &record.filesystem,
+            &group,
+            &record.block_grace
         ));
     } else if record.block_soft < record.block_usage {
         results.push(format!(
             "{} Soft block limit ({}) for {} by {} exceeded. Grace Period: {}",
-            &prefix, &record.block_soft, &record.filesystem, group, &record.block_grace
+            &prefix,
+            human_readable(record.block_soft, true),
+            &record.filesystem,
+            &group,
+            &record.block_grace
         ));
     }
 
     if record.inode_hard < record.inode_usage {
         results.push(format!(
             "{} Hard inode limit ({}) for {} by {} exceeded. Grace Period: {}",
-            &prefix, &record.inode_hard, &record.filesystem, group, &record.inode_grace
+            &prefix,
+            human_readable(record.inode_hard, false),
+            &record.filesystem,
+            &group,
+            &record.inode_grace
         ));
     } else if record.inode_soft < record.inode_usage {
         results.push(format!(
             "{} Soft inode limit ({}) for {} by {} exceeded. Grace Period: {}",
-            &prefix, &record.inode_soft, &record.filesystem, group, &record.inode_grace
+            &prefix,
+            human_readable(record.inode_soft, false),
+            &record.filesystem,
+            &group,
+            &record.inode_grace
         ));
     }
 
@@ -192,13 +228,13 @@ pub fn load_record(
                 // there's at the moment no way of just iterating over struct fields
                 quotas.push(vec![
                     record.filesystem,
-                    record.block_usage.to_string(),
-                    record.block_soft.to_string(),
-                    record.block_hard.to_string(),
+                    human_readable(record.block_usage, true),
+                    human_readable(record.block_soft, true),
+                    human_readable(record.block_hard, true),
                     record.block_grace,
-                    record.inode_usage.to_string(),
-                    record.inode_soft.to_string(),
-                    record.inode_hard.to_string(),
+                    human_readable(record.inode_usage, false),
+                    human_readable(record.inode_soft, false),
+                    human_readable(record.inode_hard, false),
                     record.inode_grace,
                 ]);
             }

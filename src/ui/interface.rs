@@ -80,7 +80,7 @@ pub fn render() -> Result<(), Box<dyn Error>> {
                     let sub_chunks = Layout::default()
                         .direction(Direction::Horizontal)
                         .constraints(
-                            [Constraint::Percentage(50), Constraint::Percentage(50)].as_ref(),
+                            [Constraint::Percentage(10), Constraint::Percentage(90)].as_ref(),
                         )
                         .split(chunks[1]);
 
@@ -100,17 +100,17 @@ pub fn render() -> Result<(), Box<dyn Error>> {
                         .header_style(Style::default().fg(Color::Green))
                         .widths(&[
                             Constraint::Length(10),
-                            Constraint::Length(5),
-                            Constraint::Length(5),
-                            Constraint::Length(5),
-                            Constraint::Length(5),
-                            Constraint::Length(5),
-                            Constraint::Length(5),
-                            Constraint::Length(5),
-                            Constraint::Length(5),
+                            Constraint::Length(11),
+                            Constraint::Length(10),
+                            Constraint::Length(10),
+                            Constraint::Length(11),
+                            Constraint::Length(11),
+                            Constraint::Length(10),
+                            Constraint::Length(10),
+                            Constraint::Length(11),
                         ]);
 
-                    f.render_widget(table, sub_chunks[0]);
+                    f.render_widget(table, sub_chunks[1]);
 
                     // render groups
                     let items: Vec<ListItem> = app
@@ -127,7 +127,7 @@ pub fn render() -> Result<(), Box<dyn Error>> {
                                 .border_type(BorderType::Rounded),
                         )
                         .highlight_symbol(">> ");
-                    f.render_stateful_widget(items, sub_chunks[1], &mut app.items.state);
+                    f.render_stateful_widget(items, sub_chunks[0], &mut app.items.state);
                 }
                 1_usize => {
                     // placeholder block
