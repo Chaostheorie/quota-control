@@ -97,7 +97,12 @@ pub fn render() -> Result<(), Box<dyn Error>> {
                                 .title("Group Data")
                                 .border_type(BorderType::Rounded),
                         )
-                        .header_style(Style::default().fg(Color::Green))
+                        .header_style(
+                            Style::default()
+                                .fg(Color::Green)
+                                .add_modifier(Modifier::BOLD),
+                        )
+                        .column_spacing(1)
                         .widths(&[
                             Constraint::Length(10),
                             Constraint::Length(11),
