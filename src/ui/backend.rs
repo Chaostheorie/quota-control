@@ -3,7 +3,7 @@ Partially borrowed from https://github.com/fdehau/tui-rs/blob/master/examples/ut
 May have some modifications for: App, TabsState, StatefulList
 */
 
-use ansi_term::Colour::{Red, Yellow};
+use ansi_term::Colour::Red;
 use csv::StringRecord;
 use regex::Regex;
 use serde::Deserialize;
@@ -16,7 +16,11 @@ use std::{
     process::Command,
     result::Result,
 };
-use tui::widgets::ListState;
+use tui::{
+    style::{Color, Style},
+    text::{Span, Spans},
+    widgets::ListState,
+};
 use users::{get_current_gid, get_current_username, get_user_groups};
 
 // Structures
@@ -134,7 +138,9 @@ fn human_readable(value: u64, bytes: bool) -> String {
     }
 
     let suffix = if bytes { "B" } else { "" };
-    if value < 1024 {
+    if value < 1024 && suffix == "" {
+        return format!("{}", value);
+    } else if value < 1024 {
         return format!("{} {}", value, suffix);
     } else if readable_value.fract() == 0.0 {
         return format!("{:.0} {}{}", readable_value, sizes[counter], suffix);
@@ -143,48 +149,55 @@ fn human_readable(value: u64, bytes: bool) -> String {
     }
 }
 
-fn check_user_quotas(record: QuotaRecord, group: &str) -> Vec<String> {
-    let prefix = Yellow.paint("Warning:");
-    let mut results: Vec<String> = Vec::new();
+pub fn check_user_quotas<'a>(record: &'a QuotaRecord, group: &'a str) -> Vec<Spans<'a>> {
+    let mut results: Vec<Spans> = Vec::new();
 
     if record.block_hard < record.block_usage {
-        results.push(format!(
-            "{} Hard block limit ({}) for {} by {} exceeded. Grace Period: {}",
-            &prefix,
-            human_readable(record.block_hard, true),
-            &record.filesystem,
-            &group,
-            &record.block_grace
-        ));
+        results.push(Spans(vec![
+            Span::styled("Warning: ", Style::default().fg(Color::Red)),
+            Span::from(format!(
+                "Hard block limit ({}) for {} by {} exceeded. Grace Period: {}",
+                human_readable(record.block_hard, true),
+                record.filesystem,
+                group,
+                record.block_grace
+            )),
+        ]));
     } else if record.block_soft < record.block_usage {
-        results.push(format!(
-            "{} Soft block limit ({}) for {} by {} exceeded. Grace Period: {}",
-            &prefix,
-            human_readable(record.block_soft, true),
-            &record.filesystem,
-            &group,
-            &record.block_grace
-        ));
+        results.push(Spans(vec![
+            Span::styled("Warning: ", Style::default().fg(Color::Yellow)),
+            Span::from(format!(
+                "Soft block limit ({}) for {} by {} exceeded. Grace Period: {}",
+                human_readable(record.block_soft, true),
+                record.filesystem,
+                group,
+                record.block_grace
+            )),
+        ]));
     }
 
     if record.inode_hard < record.inode_usage {
-        results.push(format!(
-            "{} Hard inode limit ({}) for {} by {} exceeded. Grace Period: {}",
-            &prefix,
-            human_readable(record.inode_hard, false),
-            &record.filesystem,
-            &group,
-            &record.inode_grace
-        ));
+        results.push(Spans(vec![
+            Span::styled("Warning: ", Style::default().fg(Color::Red)),
+            Span::from(format!(
+                "Hard inode limit ({}) for {} by {} exceeded. Grace Period: {}",
+                human_readable(record.inode_hard, false),
+                record.filesystem,
+                group,
+                record.inode_grace
+            )),
+        ]));
     } else if record.inode_soft < record.inode_usage {
-        results.push(format!(
-            "{} Soft inode limit ({}) for {} by {} exceeded. Grace Period: {}",
-            &prefix,
-            human_readable(record.inode_soft, false),
-            &record.filesystem,
-            &group,
-            &record.inode_grace
-        ));
+        results.push(Spans(vec![
+            Span::styled("Warning: ", Style::default().fg(Color::Yellow)),
+            Span::from(format!(
+                "Soft inode limit ({}) for {} by {} exceeded. Grace Period: {}",
+                human_readable(record.inode_soft, false),
+                record.filesystem,
+                group,
+                record.inode_grace
+            )),
+        ]));
     }
 
     return results;
@@ -208,7 +221,7 @@ pub fn verify_privileges() -> bool {
 pub fn load_record(
     headers: &Vec<&str>,
     file: &str,
-) -> Result<(String, Vec<Vec<String>>), Box<dyn Error>> {
+) -> Result<(String, Vec<Vec<String>>, Vec<QuotaRecord>), Box<dyn Error>> {
     // assembling file path
     let file_path = format!("/home/quotas/{}.quota", file);
 
@@ -222,6 +235,7 @@ pub fn load_record(
     let mut rdr = csv::ReaderBuilder::new().from_reader(reader);
     rdr.set_headers(StringRecord::from(headers.clone()));
     let mut quotas: Vec<Vec<String>> = Vec::new();
+    let mut records: Vec<QuotaRecord> = Vec::new();
 
     // deserialize csv
     for result in rdr.deserialize() {
@@ -229,6 +243,7 @@ pub fn load_record(
             Ok(result) => {
                 // this is used to ensure the structure is valid
                 let record: QuotaRecord = result;
+                records.push(record.clone());
 
                 // this is hardcoded though still secure due to serde based deserializing
                 // there's at the moment no way of just iterating over struct fields
@@ -256,7 +271,7 @@ pub fn load_record(
     }
 
     // return values
-    return Ok((timestamp, quotas));
+    return Ok((timestamp, quotas, records));
 }
 
 pub fn get_groups() -> Result<Vec<String>, Box<dyn Error>> {

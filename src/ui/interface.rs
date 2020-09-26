@@ -1,4 +1,6 @@
-use crate::ui::backend::{get_groups, load_record, ActionState, App, StatefulList, TabsState};
+use crate::ui::backend::{
+    check_user_quotas, get_groups, load_record, ActionState, App, StatefulList, TabsState,
+};
 use crate::ui::handler::{Event, Events};
 use std::{error::Error, io, vec::Vec};
 use termion::{event::Key, input::MouseTerminal, raw::IntoRawMode, screen::AlternateScreen};
@@ -37,7 +39,7 @@ pub fn render() -> Result<(), Box<dyn Error>> {
     let mut app = App {
         items: StatefulList::new(groups),
         action: ActionState::new(vec!["Hit", "Kick", "Delete"]),
-        tabs: TabsState::new(vec!["Search", "Overview"]),
+        tabs: TabsState::new(vec!["Overview", "Search"]),
     };
 
     // main render loop
@@ -77,6 +79,7 @@ pub fn render() -> Result<(), Box<dyn Error>> {
 
             match app.tabs.index {
                 0_usize => {
+                    // create layout
                     let sub_chunks = Layout::default()
                         .direction(Direction::Horizontal)
                         .constraints(
@@ -84,11 +87,32 @@ pub fn render() -> Result<(), Box<dyn Error>> {
                         )
                         .split(chunks[1]);
 
-                    let record = load_record(
-                        &headers,
-                        &app.items.items[app.items.state.selected().unwrap_or(0_usize)],
-                    )
-                    .expect("Quota could not be loaded");
+                    let data_chunks = Layout::default()
+                        .direction(Direction::Vertical)
+                        .constraints([Constraint::Length(20), Constraint::Length(8)].as_ref())
+                        .split(sub_chunks[1]);
+
+                    // load selected record
+                    let selected = &app.items.items[app.items.state.selected().unwrap_or(0_usize)];
+                    let record =
+                        load_record(&headers, selected).expect("Quota could not be loaded");
+
+                    // render warnings
+                    let notes: Vec<ListItem> = record
+                        .2
+                        .iter()
+                        .map(|r| check_user_quotas(r, selected))
+                        .flatten()
+                        .map(|i| ListItem::new(i))
+                        .collect::<Vec<ListItem>>();
+                    let notices = List::new(notes).block(
+                        Block::default()
+                            .borders(Borders::ALL)
+                            .title("Notifications"),
+                    );
+                    f.render_widget(notices, data_chunks[1]);
+
+                    // render table with record
                     let rows = record.1.iter().map(|i| Row::Data(i.iter()));
                     let table = Table::new(headers.iter(), rows)
                         .block(
@@ -115,7 +139,7 @@ pub fn render() -> Result<(), Box<dyn Error>> {
                             Constraint::Length(11),
                         ]);
 
-                    f.render_widget(table, sub_chunks[1]);
+                    f.render_widget(table, data_chunks[0]);
 
                     // render groups
                     let items: Vec<ListItem> = app
